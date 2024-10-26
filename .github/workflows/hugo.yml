@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gioco 3D - Mago e Cani</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    // Crea scena, camera e renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Aggiungi luci
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(1, 1, 1).normalize();
+    scene.add(light);
+
+    // Crea materiale
+    const wizardMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const dogMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+
+    // Crea il mago (sfera rossa)
+    const wizardGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const wizard = new THREE.Mesh(wizardGeometry, wizardMaterial);
+    wizard.position.set(0, 0, 0);
+    scene.add(wizard);
+
+    // Crea cani (sfere verdi)
+    const dogGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+    const dogs = [];
+    function addDog() {
+        const dog = new THREE.Mesh(dogGeometry, dogMaterial);
+        dog.position.set(Math.random() * 8 - 4, Math.random() * 8 - 4, 0);
+        dogs.push(dog);
+        scene.add(dog);
+    }
+    for (let i = 0; i < 3; i++) {
+        addDog();
+    }
+
+    camera.position.z = 5;
+
+    // Funzione per gestire input
+    function handleInput() {
+        const speed = 0.2; // Velocità aumentata
+        if (keyboard[87]) wizard.position.y = Math.min(wizard.position.y + speed, 4); // W
+        if (keyboard[83]) wizard.position.y = Math.max(wizard.position.y - speed, -4); // S
+        if (keyboard[65]) wizard.position.x = Math.max(wizard.position.x - speed, -4); // A
+        if (keyboard[68]) wizard.position.x = Math.min(wizard.position.x + speed, 4); // D
+    }
+
+    // Funzione per rilevare collisioni
+    function detectCollisions() {
+        for (let i = dogs.length - 1; i >= 0; i--) {
+            if (wizard.position.distanceTo(dogs[i].position) < 0.8) {
+                scene.remove(dogs[i]);
+                dogs.splice(i, 1);
+                addDog(); // Aggiungi un nuovo cane quando uno viene mangiato
+                console.log("Cane rimosso e un altro aggiunto!");
+            }
+
+            // Limiti per i cani
+            dogs[i].position.x = Math.max(Math.min(dogs[i].position.x, 4), -4);
+            dogs[i].position.y = Math.max(Math.min(dogs[i].position.y, 4), -4);
+        }
+    }
+
+    // Gestione input tastiera
+    const keyboard = {};
+    window.addEventListener('keydown', function(e) {
+        keyboard[e.keyCode] = true;
+    });
+    window.addEventListener('keyup', function(e) {
+        keyboard[e.keyCode] = false;
+    });
+
+    // Funzione di animazione
+    function animate() {
+        requestAnimationFrame(animate);
+
+        handleInput();
+        detectCollisions();
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+</script>
+</body>
+</html>
